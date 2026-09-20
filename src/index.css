@@ -1,0 +1,201 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Clean & Green Tech Theme (Light Mode) */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: rgba(16, 185, 129, 0.16);
+  --color-border-subtle: #e2e8f0;
+  --color-text: #0f172a;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-faint: #94a3b8;
+  --color-card-bg: #ffffff;
+  --color-card-border: rgba(16, 185, 129, 0.15);
+
+  /* Clean Tech Emerald Green & Sky Cyan Accents */
+  --color-primary: #10b981;
+  --color-primary-dark: #059669;
+  --color-primary-light: #d1fae5;
+  --color-primary-soft: #ecfdf5;
+  --color-accent-cyan: #06b6d4;
+  --color-accent-sky: #0284c7;
+
+  /* Status Badges */
+  --color-good: #10b981;
+  --color-moderate: #f59e0b;
+  --color-poor: #f97316;
+  --color-vpoor: #ef4444;
+  --color-hazardous: #7f1d1d;
+
+  --color-danger: #ef4444;
+  --color-info: #0284c7;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(16, 185, 129, 0.04);
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.08);
+
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  color-scheme: light;
+}
+
+.btn-video-watch {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(6, 182, 212, 0.25));
+  border: 1px solid #10b981;
+  color: var(--color-text);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.btn-video-watch:hover {
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  color: #0f172a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+}
+
+[data-theme="dark"] {
+  /* Clean & Green Tech Command Night Mode */
+  --color-bg: #0a1118;
+  --color-surface: #0f172a;
+  --color-border: rgba(16, 185, 129, 0.22);
+  --color-border-subtle: #1e293b;
+  --color-text: #f8fafc;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-faint: #64748b;
+  --color-card-bg: #0f172a;
+  --color-card-border: rgba(16, 185, 129, 0.20);
+
+  --color-primary: #10b981;
+  --color-primary-dark: #059669;
+  --color-primary-light: rgba(16, 185, 129, 0.25);
+  --color-primary-soft: rgba(16, 185, 129, 0.12);
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+
+::selection { background: var(--color-primary-light); }
+
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 8px; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* ===================== Clean & Green Tech Badges ===================== */
+.badge-ventilated {
+  background: rgba(16, 185, 129, 0.14) !important;
+  color: #059669 !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  font-weight: 700;
+}
+[data-theme="dark"] .badge-ventilated {
+  background: rgba(16, 185, 129, 0.22) !important;
+  color: #34d399 !important;
+}
+
+.badge-moderate-trapping {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #d97706 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  font-weight: 700;
+}
+[data-theme="dark"] .badge-moderate-trapping {
+  background: rgba(245, 158, 11, 0.22) !important;
+  color: #fbbf24 !important;
+}
+
+.badge-severe-trapping {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #dc2626 !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+  font-weight: 700;
+}
+[data-theme="dark"] .badge-severe-trapping {
+  background: rgba(239, 68, 68, 0.22) !important;
+  color: #f87171 !important;
+}
+
+/* ===================== Micro-Hotspot Pin Animations ===================== */
+.traffic-hotspot-pin {
+  animation: trafficBounce 2.2s infinite ease-in-out;
+}
+
+.biomass-smolder-pin {
+  animation: smolderPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes trafficBounce {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 14px #f97316;
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow: 0 0 24px rgba(249, 115, 22, 0.85);
+  }
+}
+
+@keyframes smolderPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px #ef4444;
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 28px rgba(239, 68, 68, 0.9);
+  }
+}
