@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: vayuhealth-web
+    env: static
+    plan: free
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://vayuhealth-backend.onrender.com
+      - key: VITE_API_URL
+        value: https://vayuhealth-backend.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
