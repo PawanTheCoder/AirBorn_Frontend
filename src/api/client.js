@@ -4,7 +4,9 @@ import axios from 'axios';
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://localhost:8081');
+  (typeof window !== 'undefined' && window.location.port === '5173'
+    ? 'http://localhost:8081'
+    : (typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://localhost:8081'));
 
 const client = axios.create({
   baseURL: API_BASE_URL,
@@ -23,9 +25,21 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-// Normalize errors so every screen can render a consistent message.
+// Normalize errors and guard against SPA fallback HTML strings
 client.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (
+      typeof response.data === 'string' &&
+      (response.data.trim().startsWith('<!doctype') ||
+       response.data.trim().startsWith('<!DOCTYPE') ||
+       response.data.trim().startsWith('<html'))
+    ) {
+      const err = new Error('Received HTML response instead of JSON API response from server');
+      err.response = response;
+      return Promise.reject(err);
+    }
+    return response;
+  },
   (error) => {
     const message =
       error.response?.data?.message ||

@@ -398,10 +398,23 @@ export function NotificationProvider({ children }) {
   );
 }
 
+const fallbackNotificationContext = {
+  notifications: [],
+  unreadCount: 0,
+  isConnected: true,
+  generateNotificationsForCity: () => {},
+  pushNotification: () => {},
+  notifyLocationAqiChange: () => {},
+  markAsRead: () => {},
+  markAllAsRead: () => {},
+  dismissNotification: () => {},
+  dismissAll: () => {},
+};
+
 export function useNotifications() {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
+    return fallbackNotificationContext;
   }
   return context;
 }

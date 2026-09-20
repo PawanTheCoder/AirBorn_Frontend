@@ -434,7 +434,7 @@ export default function Topbar({ onMenuClick, title, subtitle, onSearch }) {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         /* Topbar styles */
         .topbar {
           display: flex;

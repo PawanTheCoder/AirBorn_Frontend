@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   LineChart,
   Line,
@@ -31,14 +31,16 @@ import {
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { Card, Loader, StatusBadge } from '../components/Common';
-import { get72HourForecast, getForecastStations, getInversionAnalysis } from '../api/forecast';
+import { get72HourForecast, getForecastStations, getInversionAnalysis, DEFAULT_STATIONS } from '../api/forecast';
 import { getAqiBand } from '../utils/aqi';
 import { useDemoScenario } from '../context/DemoScenarioContext';
+import { useNotifications } from '../context/NotificationContext';
 import MunicipalOrderModal from '../components/MunicipalOrderModal';
 
 export default function DelhiForecast72H() {
   const { currentScenario, scenarioData, scenarioMeta, isScenarioActive } = useDemoScenario();
-  const [stations, setStations] = useState([]);
+  const { notifyLocationAqiChange } = useNotifications();
+  const [stations, setStations] = useState(DEFAULT_STATIONS);
   const [selectedStation, setSelectedStation] = useState('Anand Vihar, Delhi');
   const [forecastData, setForecastData] = useState(null);
   const [inversionData, setInversionData] = useState(null);
@@ -47,12 +49,17 @@ export default function DelhiForecast72H() {
   const [selectedHourIndex, setSelectedHourIndex] = useState(0);
   const [showGrapModal, setShowGrapModal] = useState(false);
 
+  // Safe fallback ensuring stations is ALWAYS a non-empty array
+  const safeStations = useMemo(() => {
+    return Array.isArray(stations) && stations.length > 0 ? stations : DEFAULT_STATIONS;
+  }, [stations]);
+
   // Load available stations
   useEffect(() => {
     async function loadStations() {
       try {
         const list = await getForecastStations();
-        if (list && list.length > 0) {
+        if (Array.isArray(list) && list.length > 0) {
           setStations(list);
         }
       } catch (e) {
@@ -103,6 +110,18 @@ export default function DelhiForecast72H() {
   const currentPoint = timeline[selectedHourIndex] || timeline[0] || {};
   const currentAqi = currentPoint.aqi ?? forecastData?.peakForecastedAqi ?? 418;
   const currentBand = getAqiBand(currentAqi);
+
+  // Automatic alert trigger when monitoring station forecast updates
+  const lastAlertKeyRef = useRef('');
+  useEffect(() => {
+    if (forecastData && selectedStation && typeof notifyLocationAqiChange === 'function') {
+      const alertKey = `${selectedStation}_${currentAqi}`;
+      if (lastAlertKeyRef.current !== alertKey) {
+        lastAlertKeyRef.current = alertKey;
+        notifyLocationAqiChange(selectedStation, currentAqi);
+      }
+    }
+  }, [selectedStation, forecastData, currentAqi, notifyLocationAqiChange]);
 
   // Live extracted meteorological & inversion variables
   const currentPbl = currentPoint.boundaryLayerHeight ?? forecastData?.lowestPblHeightMeters ?? inversionData?.currentPblHeightMeters ?? 240;
@@ -297,8 +316,8 @@ export default function DelhiForecast72H() {
                 className="station-select"
               >
                 {['Central Delhi', 'East Delhi', 'South Delhi', 'North & West Delhi', 'NCR Sub-regions'].map((zone) => {
-                  const zoneStations = stations.filter((st) => {
-                    const norm = st.toLowerCase();
+                  const zoneStations = safeStations.filter((st) => {
+                    const norm = (st || '').toLowerCase();
                     if (zone === 'Central Delhi') return norm.includes('ito') || norm.includes('mandir marg') || norm.includes('lodhi road');
                     if (zone === 'East Delhi') return norm.includes('anand vihar') || norm.includes('vivek vihar') || norm.includes('patparganj');
                     if (zone === 'South Delhi') return norm.includes('rk puram') || norm.includes('siri fort') || norm.includes('okhla');
@@ -319,8 +338,8 @@ export default function DelhiForecast72H() {
                   );
                 })}
                 {/* Fallback for any unmatched stations */}
-                {stations.filter((st) => {
-                  const norm = st.toLowerCase();
+                {safeStations.filter((st) => {
+                  const norm = (st || '').toLowerCase();
                   return !norm.includes('ito') && !norm.includes('mandir marg') && !norm.includes('lodhi road') &&
                     !norm.includes('anand vihar') && !norm.includes('vivek vihar') && !norm.includes('patparganj') &&
                     !norm.includes('rk puram') && !norm.includes('siri fort') && !norm.includes('okhla') &&
@@ -793,7 +812,23 @@ export default function DelhiForecast72H() {
         .forecast-header__controls {
           display: flex;
           align-items: center;
+          flex-wrap: wrap;
           gap: 12px;
+        }
+
+        @media (max-width: 768px) {
+          .forecast-header {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .forecast-header__controls {
+            width: 100%;
+            justify-content: flex-start;
+          }
+          .station-selector-card {
+            flex: 1;
+            min-width: 200px;
+          }
         }
 
         .station-selector-card {
@@ -2272,48 +2307,48 @@ function CustomForecastTooltip({ active, payload, label }) {
 
   return (
     <div style={{
-      background: 'var(--card-bg, #111827)',
-      border: '1.5px solid var(--border-color, rgba(56, 189, 248, 0.4))',
+      background: 'rgba(15, 23, 42, 0.96)',
+      border: '1.5px solid rgba(56, 189, 248, 0.45)',
       borderRadius: '10px',
       padding: '12px 16px',
-      boxShadow: '0 12px 32px rgba(0,0,0,0.3)',
+      boxShadow: '0 12px 32px rgba(0, 0, 0, 0.45)',
       fontSize: '12px',
-      color: 'var(--text-primary, #f8fafc)',
-      minWidth: '230px',
+      color: '#f8fafc',
+      minWidth: '240px',
       backdropFilter: 'blur(8px)',
     }}>
-      <div style={{ fontWeight: 800, marginBottom: '8px', color: '#38bdf8', borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.1))', paddingBottom: '5px' }}>
+      <div style={{ fontWeight: 800, marginBottom: '8px', color: '#38bdf8', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: '6px' }}>
         🕒 {data.fullTime}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
         <span style={{ color: '#38bdf8', fontWeight: 600 }}>PM2.5 (Coupled):</span>
-        <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{data.pm25} μg/m³</strong>
+        <strong style={{ color: '#ffffff', fontWeight: 800 }}>{data.pm25} μg/m³</strong>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', background: 'rgba(56, 189, 248, 0.08)', padding: '3px 6px', borderRadius: '4px' }}>
-        <span style={{ color: '#38bdf8', fontSize: '11px', fontWeight: 600 }}>Ensemble Range:</span>
-        <strong style={{ color: '#38bdf8', fontSize: '11px' }}>{data.pm25Lower}–{data.pm25Upper} μg/m³ ({data.confidencePct}% Conf.)</strong>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', background: 'rgba(56, 189, 248, 0.12)', padding: '4px 8px', borderRadius: '4px' }}>
+        <span style={{ color: '#7dd3fc', fontSize: '11px', fontWeight: 600 }}>Ensemble Range:</span>
+        <strong style={{ color: '#bae6fd', fontSize: '11px', fontWeight: 700 }}>{data.pm25Lower}–{data.pm25Upper} μg/m³ ({data.confidencePct}% Conf.)</strong>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <span style={{ color: '#f97316', fontWeight: 600 }}>PM10 (Inhalable):</span>
-        <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{data.pm10} μg/m³</strong>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+        <span style={{ color: '#fb923c', fontWeight: 600 }}>PM10 (Inhalable):</span>
+        <strong style={{ color: '#ffffff', fontWeight: 800 }}>{data.pm10} μg/m³</strong>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <span style={{ color: '#10b981', fontWeight: 600 }}>PBL Boundary Layer:</span>
-        <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{data.pblHeight} m</strong>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+        <span style={{ color: '#34d399', fontWeight: 600 }}>PBL Boundary Layer:</span>
+        <strong style={{ color: '#ffffff', fontWeight: 800 }}>{data.pblHeight} m</strong>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <span style={{ color: '#06b6d4', fontWeight: 600 }}>Ventilation Coeff:</span>
-        <strong style={{ color: data.ventilationCoeff < 2000 ? '#ef4444' : '#06b6d4' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+        <span style={{ color: '#22d3ee', fontWeight: 600 }}>Ventilation Coeff:</span>
+        <strong style={{ color: data.ventilationCoeff < 2000 ? '#f87171' : '#22d3ee', fontWeight: 800 }}>
           {data.ventilationCoeff ? data.ventilationCoeff.toLocaleString() : '--'} m²/s
         </strong>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <span style={{ color: '#d97706', fontWeight: 600 }}>Inversion Severity:</span>
-        <strong style={{ color: data.inversion > 70 ? '#ef4444' : '#d97706' }}>{data.inversion > 70 ? 'Severe' : 'Moderate'} ({data.inversion}%)</strong>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+        <span style={{ color: '#fbbf24', fontWeight: 600 }}>Inversion Severity:</span>
+        <strong style={{ color: data.inversion > 70 ? '#f87171' : '#fbbf24', fontWeight: 800 }}>{data.inversion > 70 ? 'Severe' : 'Moderate'} ({data.inversion}%)</strong>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ color: 'var(--text-muted, #94a3b8)' }}>Wind / Temp:</span>
-        <span style={{ color: 'var(--color-text-primary, #0f172a)' }}>{data.windSpeed} km/h / {data.temp}°C</span>
+        <span style={{ color: '#94a3b8' }}>Wind / Temp:</span>
+        <span style={{ color: '#f1f5f9', fontWeight: 700 }}>{data.windSpeed} km/h / {data.temp}°C</span>
       </div>
     </div>
   );

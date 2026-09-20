@@ -1,5 +1,33 @@
 import client from './client';
 
+export const DEFAULT_STATIONS = [
+  // Central Delhi
+  'ITO, Delhi',
+  'Mandir Marg, Delhi',
+  'Lodhi Road, Delhi',
+  // East Delhi
+  'Anand Vihar, Delhi',
+  'Vivek Vihar, Delhi',
+  'Patparganj, Delhi',
+  // South Delhi
+  'RK Puram, Delhi',
+  'Siri Fort, Delhi',
+  'Okhla Phase-2, Delhi',
+  // North & West Delhi
+  'Punjabi Bagh, Delhi',
+  'Rohini Sec-16, Delhi',
+  'Jahangirpuri, Delhi',
+  'Wazirpur, Delhi',
+  'Mundka, Delhi',
+  'Dwarka Sector 8, Delhi',
+  // NCR Sub-regions
+  'Noida Sec-62',
+  'Greater Noida',
+  'Ghaziabad Vasundhara',
+  'Gurugram Sec-51',
+  'Faridabad',
+];
+
 /**
  * Get 72-Hour Coupled Weather-Chemistry Forecast for a Delhi-NCR Station
  * @param {string} station - e.g. "Anand Vihar, Delhi"
@@ -9,7 +37,10 @@ export async function get72HourForecast(station = 'Anand Vihar, Delhi') {
     const response = await client.get('/api/forecast/delhi-72h', {
       params: { station },
     });
-    return response.data;
+    if (response?.data && typeof response.data === 'object' && Array.isArray(response.data.timeline)) {
+      return response.data;
+    }
+    throw new Error('Invalid backend forecast response structure');
   } catch (error) {
     console.warn('Backend 72h forecast API unavailable, attempting live Open-Meteo direct fetch:', error);
     try {
@@ -27,35 +58,12 @@ export async function get72HourForecast(station = 'Anand Vihar, Delhi') {
 export async function getForecastStations() {
   try {
     const response = await client.get('/api/forecast/stations');
-    return response.data;
+    if (Array.isArray(response?.data) && response.data.length > 0) {
+      return response.data;
+    }
+    return DEFAULT_STATIONS;
   } catch (error) {
-    return [
-      // Central Delhi
-      'ITO, Delhi',
-      'Mandir Marg, Delhi',
-      'Lodhi Road, Delhi',
-      // East Delhi
-      'Anand Vihar, Delhi',
-      'Vivek Vihar, Delhi',
-      'Patparganj, Delhi',
-      // South Delhi
-      'RK Puram, Delhi',
-      'Siri Fort, Delhi',
-      'Okhla Phase-2, Delhi',
-      // North & West Delhi
-      'Punjabi Bagh, Delhi',
-      'Rohini Sec-16, Delhi',
-      'Jahangirpuri, Delhi',
-      'Wazirpur, Delhi',
-      'Mundka, Delhi',
-      'Dwarka Sector 8, Delhi',
-      // NCR Sub-regions
-      'Noida Sec-62',
-      'Greater Noida',
-      'Ghaziabad Vasundhara',
-      'Gurugram Sec-51',
-      'Faridabad',
-    ];
+    return DEFAULT_STATIONS;
   }
 }
 
@@ -67,7 +75,10 @@ export async function getStubblePlumes(windSpeed = 12.0, windDir = 315.0) {
     const response = await client.get('/api/forecast/stubble-plumes', {
       params: { windSpeed, windDir },
     });
-    return response.data;
+    if (response?.data && typeof response.data === 'object' && (Array.isArray(response.data.fires) || Array.isArray(response.data.plumes))) {
+      return response.data;
+    }
+    throw new Error('Invalid stubble plume response');
   } catch (error) {
     console.warn('Stubble plume API unavailable, generating local satellite telemetry:', error);
     return generateClientStubbleFallback(windSpeed, windDir);
@@ -80,7 +91,10 @@ export async function getStubblePlumes(windSpeed = 12.0, windDir = 315.0) {
 export async function simulatePolicy(payload) {
   try {
     const response = await client.post('/api/forecast/simulate-policy', payload);
-    return response.data;
+    if (response?.data && typeof response.data === 'object' && Array.isArray(response.data.timeline)) {
+      return response.data;
+    }
+    throw new Error('Invalid policy simulation response');
   } catch (error) {
     console.warn('Policy simulation backend error, generating client projection:', error);
     return generateClientPolicyFallback(payload);
@@ -95,7 +109,10 @@ export async function getInversionAnalysis(station = 'Anand Vihar, Delhi') {
     const response = await client.get('/api/forecast/inversion-analysis', {
       params: { station },
     });
-    return response.data;
+    if (response?.data && typeof response.data === 'object' && response.data.currentPblHeightMeters != null) {
+      return response.data;
+    }
+    throw new Error('Invalid inversion response');
   } catch (error) {
     return {
       station,
